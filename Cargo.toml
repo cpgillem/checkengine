@@ -7,5 +7,8 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4"
-diesel = {version="2.0.0", features = ["postgres"]}
+diesel = {version="2.0.0", features = ["postgres", "r2d2", "chrono"]}
 dotenvy = "0.15"
+actix-web-httpauth = "0.8"
+chrono = "0.4"
+r2d2 = "0.8.10"
