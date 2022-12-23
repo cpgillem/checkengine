@@ -1,6 +1,6 @@
 use std::env;
 
-use actix_web::{HttpServer, App, web};
+use actix_web::{HttpServer, App, web, Responder, HttpResponse, get};
 use diesel::{PgConnection, Connection};
 use dotenvy::dotenv;
 
@@ -16,6 +16,11 @@ pub fn create_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Could not connect to {}", database_url))
 }
 
+#[get("/")]
+async fn index() -> impl Responder {
+    HttpResponse::Ok().body("test")
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
@@ -23,6 +28,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppState {
                 database_connection: create_connection(),
             }))
+            .service(index)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
