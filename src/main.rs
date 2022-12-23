@@ -1,5 +1,9 @@
 use actix_web::{HttpServer, App};
 
+struct AppState {
+    
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
