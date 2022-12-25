@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use chrono::prelude::*;
 
-use crate::{DbPool, DbConnection};
+use crate::DbConnection;
 use crate::models::register::*;
 use crate::schema::register as repo;
 

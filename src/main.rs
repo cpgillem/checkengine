@@ -19,9 +19,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(db_pool_data.clone())
-            .route("/registers", web::get().to(responders::get_registers))
+            .service(responders::get_registers)
+            .service(responders::add_register)
             .route("/registers/{id}", web::get().to(responders::get_register))
-            .route("/registers", web::post().to(responders::add_register))
             .route("/registers/{id}", web::delete().to(responders::delete_register))
     })
     .bind(("127.0.0.1", 8080))?

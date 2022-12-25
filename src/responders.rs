@@ -1,8 +1,8 @@
-use actix_web::Responder;
 use crate::{db_access, models::register::InputRegister};
 use super::DbPool;
-use actix_web::{web, Error, HttpResponse};
+use actix_web::{web, Error, HttpResponse, get, Responder, post};
 
+#[get("/register")]
 pub async fn get_registers(pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
     let mut db = pool.get().unwrap();
     match db_access::get_all_registers(&mut db) {
@@ -15,6 +15,7 @@ pub async fn get_register() -> impl Responder {
     format!("one responder by ID")
 }
 
+#[post("/register")]
 pub async fn add_register(pool: web::Data<DbPool>, input: web::Json<InputRegister>) -> Result<HttpResponse, Error> {
     let mut db = pool.get().unwrap();
     let input_register = input.0;
