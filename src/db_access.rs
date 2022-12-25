@@ -1,5 +1,4 @@
 use diesel::prelude::*;
-use chrono::prelude::*;
 
 use crate::DbConnection;
 use crate::models::register::*;
@@ -11,11 +10,12 @@ pub fn get_all_registers(connection: &mut DbConnection) -> Result<Vec<Register>,
 } 
 
 pub fn create_register(connection: &mut DbConnection, input_register: InputRegister) -> Result<Register, diesel::result::Error> {
-    let new_register = NewRegister {
-        title: &input_register.title,
-        created_at: Utc::now().naive_utc(),
-        modified_at: Utc::now().naive_utc(),
-    };
+    // let new_register = NewRegister {
+    //     title: &input_register.title,
+    //     created_at: Utc::now().naive_utc(),
+    //     modified_at: Utc::now().naive_utc(),
+    // };
+    let new_register = NewRegister::from_input(&input_register);
     
     diesel::insert_into(repo::table)
         .values(&new_register)
