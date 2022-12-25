@@ -21,7 +21,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(db_pool_data.clone())
             .service(responders::get_registers)
             .service(responders::add_register)
-            .route("/registers/{id}", web::get().to(responders::get_register))
+            .service(responders::get_register)
             .route("/registers/{id}", web::delete().to(responders::delete_register))
     })
     .bind(("127.0.0.1", 8080))?

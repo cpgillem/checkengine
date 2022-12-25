@@ -11,8 +11,14 @@ pub async fn get_registers(pool: web::Data<DbPool>) -> Result<HttpResponse, Erro
     }
 }
 
-pub async fn get_register() -> impl Responder {
-    format!("one responder by ID")
+#[get("/register/{id}")]
+pub async fn get_register(pool: web::Data<DbPool>, path: web::Path<i32>) -> Result<HttpResponse, Error> {
+    let id = path.into_inner();
+    let mut db = pool.get().unwrap();
+    match db_access::get_register(&mut db, id) {
+        Ok(register) => Ok(HttpResponse::Ok().json(register)),
+        _ => Ok(HttpResponse::InternalServerError().body("fail")),
+    }
 }
 
 #[post("/register")]
