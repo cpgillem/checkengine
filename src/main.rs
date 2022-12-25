@@ -9,8 +9,6 @@ mod db_access;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-struct AppState (DbPool);
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();

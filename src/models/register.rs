@@ -17,3 +17,8 @@ pub struct NewRegister<'a> {
     pub created_at: chrono::NaiveDateTime,
     pub modified_at: chrono::NaiveDateTime,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InputRegister {
+    pub title: String,
+}
