@@ -23,6 +23,7 @@ async fn main() -> std::io::Result<()> {
             .service(responders::add_register)
             .service(responders::get_register)
             .service(responders::delete_register)
+            .service(responders::update_register)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

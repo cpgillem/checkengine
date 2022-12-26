@@ -1,6 +1,6 @@
 use crate::schema::*;
 use chrono::prelude::*;
-use diesel::{Insertable, Queryable};
+use diesel::{Insertable, Queryable, AsChangeset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Queryable)]
@@ -29,7 +29,8 @@ impl NewRegister<'_> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, AsChangeset)]
+#[table_name="register"]
 pub struct InputRegister {
     pub title: String,
 }
