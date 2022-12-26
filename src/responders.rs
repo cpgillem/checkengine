@@ -1,6 +1,6 @@
 use crate::{db_access, models::register::InputRegister};
 use super::DbPool;
-use actix_web::{web, Error, HttpResponse, get, Responder, post};
+use actix_web::{web, Error, HttpResponse, get, Responder, post, delete};
 
 #[get("/register")]
 pub async fn get_registers(pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
@@ -31,6 +31,12 @@ pub async fn add_register(pool: web::Data<DbPool>, input: web::Json<InputRegiste
     }
 }
 
-pub async fn delete_register() ->  impl Responder {
-    format!("delete register")
+#[delete("/register/{id}")]
+pub async fn delete_register(pool: web::Data<DbPool>, path: web::Path<i32>) ->  Result<HttpResponse, Error> {
+    let id = path.into_inner();
+    let mut db = pool.get().unwrap();
+    match db_access::delete_register(&mut db, id) {
+        Ok(_) => Ok(HttpResponse::Ok().body("deleted")),
+        _ => Ok(HttpResponse::InternalServerError().body("fail")),
+    }
 }
