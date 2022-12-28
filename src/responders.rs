@@ -1,5 +1,5 @@
 use crate::{db_access, models::register::InputRegister};
-use super::DbPool;
+use checkengine::DbPool;
 use actix_web::{web, Error, HttpResponse, get, post, delete, patch};
 
 #[get("/register")]

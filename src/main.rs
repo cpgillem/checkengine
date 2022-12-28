@@ -1,14 +1,10 @@
 use actix_web::{HttpServer, App, web};
-use diesel::{r2d2::{self, ConnectionManager}, PgConnection};
 
 mod responders;
 mod models;
 mod schema;
 mod builders;
 mod db_access;
-
-pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
-pub type DbConnection = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

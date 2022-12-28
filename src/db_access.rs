@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use diesel::dsl::now;
 
-use crate::DbConnection;
+use checkengine::DbConnection;
 use crate::models::register::*;
 use crate::schema::register::{self as repo, modified_at, title};
 

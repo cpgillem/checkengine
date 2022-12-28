@@ -3,7 +3,7 @@ use std::env;
 use dotenvy::dotenv;
 use diesel::{r2d2::{self, ConnectionManager}, PgConnection};
 
-pub fn create_connection() -> super::DbPool {
+pub fn create_connection() -> checkengine::DbPool {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL not set.");
