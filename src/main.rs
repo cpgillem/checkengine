@@ -3,6 +3,7 @@ mod models;
 mod schema;
 mod builders;
 mod db_access;
+mod auth;
 
 use actix_web::{HttpServer, App, web};
 

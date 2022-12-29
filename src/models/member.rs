@@ -1,6 +1,6 @@
 use crate::schema::*;
 use chrono::prelude::*;
-use diesel::{Insertable, Queryable, AsChangeset};
+use diesel::{Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Queryable)]
@@ -23,18 +23,18 @@ pub struct NewMember<'a> {
 
 impl NewMember<'_> {
     pub fn from_input(input: &InputMember) -> NewMember {
+
         NewMember {
             username: &input.username,
-            password_hash: &input.password_hash,
+            password_hash: &input.password_raw,
             created_at: Utc::now().naive_utc(),
             modified_at: Utc::now().naive_utc(),
         }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, AsChangeset)]
-#[table_name = "member"]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct InputMember {
     pub username: String,
-    pub password_hash: String,
+    pub password_raw: String,
 }
