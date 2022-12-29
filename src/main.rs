@@ -1,10 +1,10 @@
-use actix_web::{HttpServer, App, web};
-
 mod responders;
 mod models;
 mod schema;
 mod builders;
 mod db_access;
+
+use actix_web::{HttpServer, App, web};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -15,11 +15,16 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(db_pool_data.clone())
-            .service(responders::get_registers)
-            .service(responders::add_register)
-            .service(responders::get_register)
-            .service(responders::delete_register)
-            .service(responders::update_register)
+            .service(
+                web::scope("/api/v1").service(
+                    web::scope("/register")
+                        .service(responders::register::get_registers)
+                        .service(responders::register::add_register)
+                        .service(responders::register::get_register)
+                        .service(responders::register::delete_register)
+                        .service(responders::register::update_register)
+                )
+            )
     })
     .bind(("127.0.0.1", 8080))?
     .run()

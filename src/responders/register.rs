@@ -2,7 +2,7 @@ use crate::{db_access, models::register::InputRegister};
 use checkengine::DbPool;
 use actix_web::{web, Error, HttpResponse, get, post, delete, patch};
 
-#[get("/register")]
+#[get("")]
 pub async fn get_registers(pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
     let mut db = pool.get().unwrap();
     match db_access::get_all_registers(&mut db) {
@@ -11,7 +11,7 @@ pub async fn get_registers(pool: web::Data<DbPool>) -> Result<HttpResponse, Erro
     }
 }
 
-#[get("/register/{id}")]
+#[get("{id}")]
 pub async fn get_register(pool: web::Data<DbPool>, path: web::Path<i32>) -> Result<HttpResponse, Error> {
     let id = path.into_inner();
     let mut db = pool.get().unwrap();
@@ -21,7 +21,7 @@ pub async fn get_register(pool: web::Data<DbPool>, path: web::Path<i32>) -> Resu
     }
 }
 
-#[post("/register")]
+#[post("")]
 pub async fn add_register(pool: web::Data<DbPool>, input: web::Json<InputRegister>) -> Result<HttpResponse, Error> {
     let mut db = pool.get().unwrap();
     let input_register = input.0;
@@ -31,7 +31,7 @@ pub async fn add_register(pool: web::Data<DbPool>, input: web::Json<InputRegiste
     }
 }
 
-#[delete("/register/{id}")]
+#[delete("{id}")]
 pub async fn delete_register(pool: web::Data<DbPool>, path: web::Path<i32>) ->  Result<HttpResponse, Error> {
     let id = path.into_inner();
     let mut db = pool.get().unwrap();
@@ -41,7 +41,7 @@ pub async fn delete_register(pool: web::Data<DbPool>, path: web::Path<i32>) ->  
     }
 }
 
-#[patch("/register/{id}")]
+#[patch("{id}")]
 pub async fn update_register(pool: web::Data<DbPool>, path: web::Path<i32>, input: web::Json<InputRegister>) -> Result<HttpResponse, Error> {
     let mut db = pool.get().unwrap();
     let id = path.into_inner();
