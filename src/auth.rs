@@ -12,12 +12,12 @@ pub type Hash = [u8; HASH_LEN];
 pub type Salt = [u8; SALT_LEN];
 
 // Hashes and salts a raw password.
-pub fn hash_password(password_raw: &str) -> Result<Hash, ring::error::Unspecified> {
+pub fn hash_password(password_raw: &str) -> Result<(Hash, Salt), ring::error::Unspecified> {
     let salt = generate_salt()?;
     let password_bytes = password_raw.as_bytes();
     let mut hash: Hash = [0u8; HASH_LEN];
     pbkdf2::derive(PBKDF2_HMAC_SHA512, NonZeroU32::new(ITERATIONS).unwrap(), &salt, password_bytes, &mut hash);
-    Ok(hash)
+    Ok((hash, salt))
 }
 
 // Checks a raw password against a hashed password.
@@ -35,4 +35,30 @@ fn generate_salt() -> Result<[u8; SALT_LEN], ring::error::Unspecified> {
     let mut salt = [0u8; SALT_LEN];
     rng.fill(&mut salt)?;
     Ok(salt)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{generate_salt, hash_password, check_password};
+
+    #[test]
+    fn test_generate_salt() {
+        generate_salt().unwrap();
+    }
+
+    #[test]
+    fn test_hash_password() {
+        let raw = "hunter2";
+        hash_password(&raw).unwrap();
+    }
+
+    #[test]
+    fn test_check_password() {
+        let raw = "hunter2";
+        let (hash, salt) = hash_password(&raw).unwrap();
+        let check = check_password("hunter2", &hash, &salt).unwrap();
+        assert_eq!(check, true);
+        let check_wrong = check_password("hunter3", &hash, &salt).unwrap();
+        assert_eq!(check_wrong, false);
+    }
 }
