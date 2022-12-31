@@ -1,6 +1,7 @@
 use crate::{schema::*, auth::{self, AuthError}};
-use chrono::prelude::*;
+use chrono::{prelude::*, Duration};
 use diesel::{Insertable, Queryable};
+use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Queryable)]
@@ -11,6 +12,30 @@ pub struct Member {
     pub password_hash: String,
     pub created_at: chrono::NaiveDateTime,
     pub modified_at: chrono::NaiveDateTime,
+}
+
+impl Member {
+    pub fn new(id: i32, username: &str, password_hash: &str) -> Member {
+        Member {
+            id,
+            username: String::from(username),
+            password_hash: String::from(password_hash),
+            created_at: Utc::now().naive_utc(),
+            modified_at: Utc::now().naive_utc(),
+        }
+    }
+
+    fn get_jwt_claims(&self) -> JwtClaims {
+        let expiration = auth::get_jwt_exp_timestamp();
+        JwtClaims { sub: self.username.clone(), exp: expiration as usize }
+    }
+
+    pub fn get_jwt(&self) -> Result<String, AuthError> {
+        match encode(&Header::default(), &self.get_jwt_claims(), &EncodingKey::from_secret(&auth::get_jwt_secret())) {
+            Ok(v) => Ok(v),
+            Err(_) => Err(AuthError::JwtError),
+        }
+    }
 }
 
 #[derive(Insertable, Debug)]
@@ -43,11 +68,25 @@ pub struct InputMember {
     pub password_raw: String,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct Login {
+    pub username: String,
+    pub password_raw: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct JwtClaims {
+    pub sub: String,
+    pub exp: usize,
+}
+
 #[cfg(test)]
 mod tests {
+    use chrono::Utc;
+
     use crate::auth;
 
-    use super::{InputMember, NewMember};
+    use super::{InputMember, NewMember, Member};
 
     #[test]
     fn test_from_input() {
@@ -59,5 +98,13 @@ mod tests {
         let new_member = NewMember::from_input(&input_member).expect("could not convert to NewMember");
 
         assert!(auth::check_password("hunter2", &new_member.password_hash, &new_member.salt).unwrap());
+    }
+
+    #[test]
+    fn test_get_jwt() {
+        std::env::set_var("JWT_EXPIRATION", "3600");
+        std::env::set_var("JWT_SECRET", "blahblahblah");
+        let member = Member::new(0, "user", "hash");
+        let jwt = member.get_jwt().unwrap();
     }
 }

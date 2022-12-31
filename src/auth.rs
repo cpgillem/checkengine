@@ -1,5 +1,6 @@
 use std::num::NonZeroU32;
 
+use chrono::{Duration, Utc};
 use ring::pbkdf2::{PBKDF2_HMAC_SHA512, self};
 use ring::{digest};
 use ring::rand::{self, SecureRandom};
@@ -16,6 +17,7 @@ pub enum AuthError {
     CouldNotHash,
     CouldNotSalt,
     BadBase64String,
+    JwtError,
     Unspecified,
 }
 
@@ -54,6 +56,22 @@ pub fn check_password(password_raw: &str, password_hash: &str, salt: &str) -> Re
         Ok(_) => Ok(true),
         Err(_) => Ok(false),
     }
+}
+
+pub fn get_jwt_secret() -> Vec<u8> {
+    std::env::var("JWT_SECRET").unwrap().into_bytes()
+}
+
+pub fn get_jwt_exp_timestamp() -> i64 {
+    // This type of operation should only panic if .env is wrong, and that's fine
+    let seconds = std::env::var("JWT_EXPIRATION")
+        .expect("JWT_EXPIRATION not set")
+        .parse::<i64>()
+        .expect("invalid JWT_EXPIRATION"); 
+    Utc::now()
+        .checked_add_signed(Duration::seconds(seconds))
+        .expect("invalid JWT_EXPIRATION")
+        .timestamp()
 }
 
 fn generate_salt() -> Result<Salt, AuthError> {
