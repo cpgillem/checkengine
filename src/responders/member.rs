@@ -1,5 +1,5 @@
 use crate::{db_access, models::{register::InputRegister, member::InputMember}};
-use checkengine::DbPool;
+use crate::DbPool;
 use actix_web::{web, Error, HttpResponse, get, post, delete, patch};
 
 // Sends the login payload to the server and returns a JWT.

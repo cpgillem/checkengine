@@ -1,11 +1,5 @@
-mod responders;
-mod models;
-mod schema;
-mod builders;
-mod db_access;
-mod auth;
-
 use actix_web::{HttpServer, App, web};
+use checkengine::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
