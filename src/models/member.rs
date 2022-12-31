@@ -1,10 +1,7 @@
-use std::error::Error;
-
-use crate::{schema::*, auth::{self, Hash, Salt, AuthError}};
+use crate::{schema::*, auth::{self, AuthError}};
 use chrono::prelude::*;
 use diesel::{Insertable, Queryable};
 use serde::{Deserialize, Serialize};
-use base64;
 
 #[derive(Debug, Serialize, Deserialize, Queryable)]
 pub struct Member {

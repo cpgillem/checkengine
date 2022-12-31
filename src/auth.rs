@@ -2,7 +2,7 @@ use std::num::NonZeroU32;
 
 use ring::pbkdf2::{PBKDF2_HMAC_SHA512, self};
 use ring::{digest};
-use ring::rand::{self, SecureRandom, generate};
+use ring::rand::{self, SecureRandom};
 
 const SALT_LEN: usize = 16;
 const HASH_LEN: usize = digest::SHA512_OUTPUT_LEN;
