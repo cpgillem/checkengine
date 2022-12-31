@@ -2,12 +2,6 @@ use crate::{models::{register::InputRegister, member::InputMember}};
 use crate::DbPool;
 use actix_web::{web, Error, HttpResponse, get, post, delete, patch};
 
-// Sends the login payload to the server and returns a JWT.
-#[post("")]
-pub async fn authenticate(_pool: web::Data<DbPool>,_path: web::Path<i32>) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::Ok().finish())
-}
-
 // Creates a user in the database.
 #[post("")]
 pub async fn create_member(_pool: web::Data<DbPool>, _input: web::Json<InputMember>) -> Result<HttpResponse, Error> {

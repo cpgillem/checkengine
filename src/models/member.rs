@@ -1,5 +1,5 @@
 use crate::{schema::*, auth::{self, AuthError}};
-use chrono::{prelude::*, Duration};
+use chrono::prelude::*;
 use diesel::{Insertable, Queryable};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
@@ -12,14 +12,16 @@ pub struct Member {
     pub password_hash: String,
     pub created_at: chrono::NaiveDateTime,
     pub modified_at: chrono::NaiveDateTime,
+    pub salt: String,
 }
 
 impl Member {
-    pub fn new(id: i32, username: &str, password_hash: &str) -> Member {
+    pub fn new(id: i32, username: &str, password_hash: &str, salt: &str) -> Member {
         Member {
             id,
             username: String::from(username),
             password_hash: String::from(password_hash),
+            salt: String::from(salt),
             created_at: Utc::now().naive_utc(),
             modified_at: Utc::now().naive_utc(),
         }
@@ -82,8 +84,6 @@ pub struct JwtClaims {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
-
     use crate::auth;
 
     use super::{InputMember, NewMember, Member};
@@ -104,7 +104,7 @@ mod tests {
     fn test_get_jwt() {
         std::env::set_var("JWT_EXPIRATION", "3600");
         std::env::set_var("JWT_SECRET", "blahblahblah");
-        let member = Member::new(0, "user", "hash");
+        let member = Member::new(0, "user", "hash", "salt");
         let jwt = member.get_jwt().unwrap();
     }
 }

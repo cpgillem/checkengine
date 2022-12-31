@@ -11,14 +11,16 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(db_pool_data.clone())
             .service(
-                web::scope("/api/v1").service(
-                    web::scope("/register")
-                        .service(responders::register::get_registers)
-                        .service(responders::register::add_register)
-                        .service(responders::register::get_register)
-                        .service(responders::register::delete_register)
-                        .service(responders::register::update_register)
-                )
+                web::scope("/api/v1")
+                    .service(
+                        web::scope("/register")
+                            .service(responders::register::get_registers)
+                            .service(responders::register::add_register)
+                            .service(responders::register::get_register)
+                            .service(responders::register::delete_register)
+                            .service(responders::register::update_register)
+                    )
+                    .service(responders::auth::authenticate)
             )
     })
     .bind(("127.0.0.1", 8080))?
