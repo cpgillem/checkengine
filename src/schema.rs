@@ -29,6 +29,7 @@ diesel::table! {
         title -> Text,
         created_at -> Timestamp,
         modified_at -> Timestamp,
+        parent_id -> Nullable<Int4>,
     }
 }
 

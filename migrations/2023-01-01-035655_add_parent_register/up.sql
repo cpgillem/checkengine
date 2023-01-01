@@ -1,0 +1,1 @@
+ALTER TABLE register ADD COLUMN parent_id INT;
