@@ -12,6 +12,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    posting (id) {
+        id -> Int4,
+        posted_at -> Timestamp,
+        check_number -> Nullable<Text>,
+        summary -> Text,
+        from_register_id -> Int4,
+        to_register_id -> Int4,
+        amount -> Int8,
+    }
+}
+
+diesel::table! {
     register (id) {
         id -> Int4,
         title -> Text,
@@ -22,5 +34,6 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     member,
+    posting,
     register,
 );
