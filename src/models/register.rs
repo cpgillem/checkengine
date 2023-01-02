@@ -10,6 +10,7 @@ pub struct Register {
     pub created_at: chrono::NaiveDateTime,
     pub modified_at: chrono::NaiveDateTime,
     pub parent_id: Option<i32>,
+    pub member_id: i32,
 }
 
 #[derive(Insertable, Debug)]
@@ -19,6 +20,7 @@ pub struct NewRegister<'a> {
     pub created_at: chrono::NaiveDateTime,
     pub modified_at: chrono::NaiveDateTime,
     pub parent_id: Option<i32>,
+    pub member_id: i32,
 }
 
 impl NewRegister<'_> {
@@ -26,6 +28,7 @@ impl NewRegister<'_> {
         NewRegister {
             title: &input.title,
             parent_id: input.parent_id,
+            member_id: input.member_id,
             created_at: Utc::now().naive_utc(),
             modified_at: Utc::now().naive_utc(),
         }
@@ -37,4 +40,5 @@ impl NewRegister<'_> {
 pub struct InputRegister {
     pub title: String,
     pub parent_id: Option<i32>,
+    pub member_id: i32,
 }

@@ -51,3 +51,4 @@ pub async fn signup(pool: web::Data<DbPool>, body: web::Json<Signup>) -> Result<
 
     Ok(HttpResponse::Ok().json(inserted_member))
 }
+

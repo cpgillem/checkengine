@@ -44,10 +44,12 @@ diesel::table! {
         created_at -> Timestamp,
         modified_at -> Timestamp,
         parent_id -> Nullable<Int4>,
+        member_id -> Int4,
     }
 }
 
 diesel::joinable!(posting -> posting_group (posting_group_id));
+diesel::joinable!(register -> member (member_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     member,

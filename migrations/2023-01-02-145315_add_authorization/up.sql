@@ -1,0 +1,3 @@
+ALTER TABLE register ADD COLUMN member_id INT NOT NULL;
+
+ALTER TABLE register ADD CONSTRAINT fk_member_id FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE;

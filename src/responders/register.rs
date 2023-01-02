@@ -1,3 +1,4 @@
+use crate::auth::{JwtClaims, AuthError};
 use crate::models::register::{Register, NewRegister};
 use crate::schema::register::dsl;
 use crate::models::register::InputRegister;
@@ -10,7 +11,9 @@ use diesel::dsl::now;
 #[get("")]
 pub async fn get_registers(pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().map_err(|e| error::ErrorInternalServerError(e))?;
-    let registers = dsl::register.load::<Register>(&mut connection).map_err(|e| error::ErrorNotFound(e))?;
+    let registers = dsl::register
+        .load::<Register>(&mut connection)
+        .map_err(|e| error::ErrorNotFound(e))?;
     Ok(HttpResponse::Ok().json(registers))
 }
 
