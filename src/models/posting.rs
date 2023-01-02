@@ -2,8 +2,11 @@ use chrono::Utc;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::schema::*;
+use crate::models::posting_group::PostingGroup;
 
-#[derive(Debug, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Serialize, Deserialize, Queryable, Identifiable, Associations)]
+#[belongs_to(PostingGroup)]
+#[table_name = "posting"]
 pub struct Posting {
     pub id: i32,
     pub posted_at: chrono::NaiveDateTime,
@@ -24,6 +27,7 @@ pub struct Posting {
 
     pub created_at: chrono::NaiveDateTime,
     pub modified_at: chrono::NaiveDateTime,
+    pub posting_group_id: i32,
 }
 
 #[derive(Insertable, Debug)]
@@ -37,6 +41,7 @@ pub struct NewPosting {
     pub amount: i64,
     pub created_at: chrono::NaiveDateTime,
     pub modified_at: chrono::NaiveDateTime,
+    pub posting_group_id: i32,
 }
 
 impl NewPosting {
@@ -50,6 +55,7 @@ impl NewPosting {
             amount: input.amount,
             created_at: Utc::now().naive_utc(),
             modified_at: Utc::now().naive_utc(),
+            posting_group_id: input.posting_group_id,
         }
     }
 }
@@ -63,4 +69,5 @@ pub struct InputPosting {
     pub from_register_id: i32,
     pub to_register_id: i32,
     pub amount: i64,
+    pub posting_group_id: i32,
 }

@@ -1,9 +1,12 @@
 use crate::schema::*;
 use chrono::prelude::*;
-use diesel::{Insertable, Queryable, AsChangeset};
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::models::member::Member;
 
-#[derive(Debug, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Serialize, Deserialize, Queryable, Associations, Identifiable)]
+#[belongs_to(Member)]
+#[table_name = "register"]
 pub struct Register {
     pub id: i32,
     pub title: String,
