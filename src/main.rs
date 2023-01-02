@@ -20,7 +20,11 @@ async fn main() -> std::io::Result<()> {
                             .service(responders::register::delete_register)
                             .service(responders::register::update_register)
                     )
-                    .service(responders::auth::authenticate)
+                    .service(
+                        web::scope("/auth")
+                            .service(responders::auth::authenticate)
+                            .service(responders::auth::signup)
+                    )
             )
     })
     .bind(("127.0.0.1", 8080))?

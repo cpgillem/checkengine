@@ -7,7 +7,7 @@ diesel::table! {
         password_hash -> Text,
         created_at -> Timestamp,
         modified_at -> Timestamp,
-        salt -> Bpchar,
+        salt -> Varchar,
     }
 }
 

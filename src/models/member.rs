@@ -12,6 +12,7 @@ pub struct Member {
     pub password_hash: String,
     pub created_at: chrono::NaiveDateTime,
     pub modified_at: chrono::NaiveDateTime,
+    #[serde(skip_serializing)]
     pub salt: String,
 }
 
@@ -51,11 +52,11 @@ pub struct NewMember {
 }
 
 impl NewMember{
-    pub fn from_input(input: &InputMember) -> Result<NewMember, AuthError> {
-        let (hash, salt) = auth::hash_password(&input.password_raw)?;
+    pub fn from_signup(signup: &Signup) -> Result<NewMember, AuthError> {
+        let (hash, salt) = auth::hash_password(&signup.password_raw)?;
 
         Ok(NewMember {
-            username: input.username.clone(),
+            username: signup.username.clone(),
             password_hash: hash.clone(),
             salt: salt.clone(),
             created_at: Utc::now().naive_utc(),
@@ -76,6 +77,12 @@ pub struct Login {
     pub password_raw: String,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct Signup {
+    pub username: String, 
+    pub password_raw: String,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct JwtClaims {
     pub sub: String,
@@ -84,18 +91,18 @@ pub struct JwtClaims {
 
 #[cfg(test)]
 mod tests {
-    use crate::auth;
+    use crate::{auth, models::member::Signup};
 
-    use super::{InputMember, NewMember, Member};
+    use super::{NewMember, Member};
 
     #[test]
     fn test_from_input() {
-        let input_member = InputMember {
+        let input_member = Signup {
             username: String::from("user"),
             password_raw: String::from("hunter2"),
         };
 
-        let new_member = NewMember::from_input(&input_member).expect("could not convert to NewMember");
+        let new_member = NewMember::from_signup(&input_member).expect("could not convert to NewMember");
 
         assert!(auth::check_password("hunter2", &new_member.password_hash, &new_member.salt).is_ok());
     }
