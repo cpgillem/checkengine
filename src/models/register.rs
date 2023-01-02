@@ -27,11 +27,11 @@ pub struct NewRegister<'a> {
 }
 
 impl NewRegister<'_> {
-    pub fn from_input(input: &InputRegister) -> NewRegister {
+    pub fn from_input<'a>(input: &'a InputRegister, member: &'a Member) -> NewRegister<'a> {
         NewRegister {
             title: &input.title,
             parent_id: input.parent_id,
-            member_id: input.member_id,
+            member_id: member.id,
             created_at: Utc::now().naive_utc(),
             modified_at: Utc::now().naive_utc(),
         }
@@ -43,5 +43,4 @@ impl NewRegister<'_> {
 pub struct InputRegister {
     pub title: String,
     pub parent_id: Option<i32>,
-    pub member_id: i32,
 }

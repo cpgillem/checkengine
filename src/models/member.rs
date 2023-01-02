@@ -5,7 +5,8 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 use crate::schema::member;
 
-#[derive(Debug, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[table_name = "member"]
 pub struct Member {
     pub id: i32,
     pub username: String,
