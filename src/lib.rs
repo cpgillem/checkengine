@@ -8,5 +8,6 @@ pub mod responders;
 pub mod models;
 pub mod schema;
 pub mod builders;
-pub mod db_access;
 pub mod auth;
+
+// pub mod resource_responders;

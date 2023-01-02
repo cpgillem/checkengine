@@ -97,7 +97,7 @@ mod tests {
 
         let new_member = NewMember::from_input(&input_member).expect("could not convert to NewMember");
 
-        assert!(auth::check_password("hunter2", &new_member.password_hash, &new_member.salt).unwrap());
+        assert!(auth::check_password("hunter2", &new_member.password_hash, &new_member.salt).is_ok());
     }
 
     #[test]
@@ -105,6 +105,6 @@ mod tests {
         std::env::set_var("JWT_EXPIRATION", "3600");
         std::env::set_var("JWT_SECRET", "blahblahblah");
         let member = Member::new(0, "user", "hash", "salt");
-        let jwt = member.get_jwt().unwrap();
+        member.get_jwt().unwrap();
     }
 }

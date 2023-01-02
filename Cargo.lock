@@ -350,6 +350,7 @@ dependencies = [
  "actix-web-httpauth",
  "base64 0.20.0",
  "chrono",
+ "derive_more",
  "diesel",
  "dotenvy",
  "env_logger",

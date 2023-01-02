@@ -1,6 +1,7 @@
-use crate::{models::{register::InputRegister, member::InputMember}};
+use crate::{models::{register::{InputRegister}, member::{InputMember, Member}}, schema::{register, member}};
 use crate::DbPool;
-use actix_web::{web, Error, HttpResponse, get, post, delete, patch};
+use actix_web::{web, Error, HttpResponse, get, post, delete, patch, error};
+use diesel::{QueryDsl, RunQueryDsl};
 
 // Creates a user in the database.
 #[post("")]
@@ -9,8 +10,13 @@ pub async fn create_member(_pool: web::Data<DbPool>, _input: web::Json<InputMemb
 }
 
 #[get("{id}")]
-pub async fn get_member(_pool: web::Data<DbPool>, _input: web::Path<i32>) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::Ok().finish())
+pub async fn get_member_by_id(pool: web::Data<DbPool>, input: web::Path<i32>) -> Result<HttpResponse, Error> {
+    let id = input.into_inner();
+
+    let mut connection = pool.get().map_err(|e| error::ErrorInternalServerError(e))?;
+
+    let member = member::table.find(id).first::<Member>(&mut connection).map_err(|e| error::ErrorNotFound(e))?;
+    Ok(HttpResponse::Ok().json(member))
 }
 
 #[delete("{id}")]
