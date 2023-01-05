@@ -34,6 +34,7 @@ diesel::table! {
         summary -> Text,
         created_at -> Timestamp,
         modified_at -> Timestamp,
+        member_id -> Int4,
     }
 }
 
@@ -49,6 +50,7 @@ diesel::table! {
 }
 
 diesel::joinable!(posting -> posting_group (posting_group_id));
+diesel::joinable!(posting_group -> member (member_id));
 diesel::joinable!(register -> member (member_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

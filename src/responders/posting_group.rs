@@ -1,0 +1,82 @@
+use crate::models::posting::{Posting, NewPosting};
+use crate::models::{member::Member, posting::InputPosting};
+use crate::models::posting_group::*;
+use crate::responders::{get_connection, get_member};
+use crate::{schema::*, DbConnection};
+
+use crate::DbPool;
+use actix_web::{web, HttpResponse, HttpRequest, Error, get, post, delete, patch, error};
+use diesel::prelude::*;
+use diesel::RunQueryDsl;
+use chrono::prelude::*;
+
+/// Gets a posting group by ID, along with its postings.
+#[get("{id}")]
+pub async fn get_posting_group(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    let id = id.into_inner();
+    let member = get_member(&request, &pool)?;
+    let mut connection = get_connection(&pool)?;
+
+    let posting_group = posting_group::table
+        .filter(posting_group::member_id.eq(member.id))
+        .filter(posting_group::id.eq(id))
+        .first::<PostingGroup>(&mut connection)
+        .map_err(|e| error::ErrorNotFound(e))?;
+
+    let postings = Posting::belonging_to(&posting_group)
+        .load::<Posting>(&mut connection)
+        .map_err(|e| error::ErrorNotFound(e))?;
+
+    Ok(HttpResponse::Ok().json(FullPostingGroup::new(&posting_group, &postings)))
+}
+
+/// Creates a posting group given the group metadata and all postings. They must balance.
+#[post("")]
+pub async fn create_posting_group(pool: web::Data<DbPool>, request: HttpRequest, input_posting_group: web::Json<InputPostingGroup>) -> Result<HttpResponse, Error> {
+    let member = get_member(&request, &pool)?;
+    let mut connection = get_connection(&pool)?;
+    let new_posting_group = NewPostingGroup::from_input(&input_posting_group.0, &member);
+    // let new_postings = input_posting_group.postings
+    //     .iter()
+    //     .map(|i| {
+    //         NewPosting::from_input(&i)
+    //     })
+    //     .collect::<Vec<_>>();
+    
+    // Check for balance. This ideally would not happen since the frontend will validate it.
+    // if NewPosting::sum(&new_postings) != 0 {
+    //     return Err(error::ErrorBadRequest("posting group must balance."))
+    // }
+
+    // Add the group to the database.
+    let inserted_posting_group = diesel::insert_into(posting_group::table)
+        .values(&new_posting_group)
+        .get_result::<PostingGroup>(&mut connection)
+        .map_err(|e| error::ErrorInternalServerError(e))?;
+    
+    Ok(HttpResponse::Ok().json(inserted_posting_group))
+}
+
+/// Deletes a posting group.
+#[delete("{id}")]
+pub async fn delete_posting_group(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Updates metadata for a posting group.
+#[patch("{id}")]
+pub async fn update_posting_group(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest, input_posting_group: web::Json<InputPostingGroup>) -> Result<HttpResponse, Error> {
+    Ok(HttpResponse::Ok().finish())
+}
+
+// /// Adds a posting to the posting group. Adds or removes orphan posting for balance.
+// #[post("{id}/posting")]
+// pub async fn add_posting(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest, input_posting: web::Json<InputPosting>) -> Result<HttpResponse, Error> {
+//     Ok(HttpResponse::Ok().finish())
+// }
+
+// /// Deletes a posting from a posting group. Adds or removes orphan posting for balance.
+// #[delete("{id}/posting")]
+// pub async fn delete_posting(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
+//     Ok(HttpResponse::Ok().finish())
+// }

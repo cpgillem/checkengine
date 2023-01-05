@@ -1,3 +1,5 @@
+use std::iter::Sum;
+
 use chrono::Utc;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -12,7 +14,7 @@ pub struct Posting {
     pub posted_at: chrono::NaiveDateTime,
 
     /// Blank string if no check number provided.
-    pub check_number: String,
+    pub check_number: Option<String>,
 
     pub summary: String,
 
@@ -57,6 +59,14 @@ impl NewPosting {
             modified_at: Utc::now().naive_utc(),
             posting_group_id: input.posting_group_id,
         }
+    }
+
+    pub fn sum(postings: &Vec<NewPosting>) -> i64 {
+        let mut sum: i64 = 0;
+        for p in postings {
+            sum += p.amount;
+        }
+        sum
     }
 }
 
