@@ -6,6 +6,7 @@ use crate::{schema::*, DbConnection};
 
 use crate::DbPool;
 use actix_web::{web, HttpResponse, HttpRequest, Error, get, post, delete, patch, error};
+use diesel::dsl::now;
 use diesel::prelude::*;
 use diesel::RunQueryDsl;
 use chrono::prelude::*;
@@ -67,18 +68,25 @@ pub async fn delete_posting_group(pool: web::Data<DbPool>, path: web::Path<i32>,
 
 /// Updates metadata for a posting group.
 #[patch("{id}")]
-pub async fn update_posting_group(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest, input_posting_group: web::Json<InputPostingGroup>) -> Result<HttpResponse, Error> {
+pub async fn update_posting_group(pool: web::Data<DbPool>, path: web::Path<i32>, request: HttpRequest, input_posting_group: web::Json<InputPostingGroup>) -> Result<HttpResponse, Error> {
+    let id = path.into_inner();
+    let member = get_member(&request, &pool)?;
+    let mut connection = get_connection(&pool)?;
+
+    // Update the posting group.
+    diesel::update(
+        posting_group::table
+            .filter(posting_group::member_id.eq(member.id))
+            .find(id)
+    )
+    .set((
+        posting_group::posted_at.eq(input_posting_group.posted_at),
+        posting_group::check_number.eq(input_posting_group.check_number.clone()),
+        posting_group::summary.eq(input_posting_group.summary.clone()),
+        posting_group::modified_at.eq(now),
+    ))
+    .execute(&mut connection)
+    .map_err(|e| error::ErrorInternalServerError(e))?;
+
     Ok(HttpResponse::Ok().finish())
 }
-
-// /// Adds a posting to the posting group. Adds or removes orphan posting for balance.
-// #[post("{id}/posting")]
-// pub async fn add_posting(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest, input_posting: web::Json<InputPosting>) -> Result<HttpResponse, Error> {
-//     Ok(HttpResponse::Ok().finish())
-// }
-
-// /// Deletes a posting from a posting group. Adds or removes orphan posting for balance.
-// #[delete("{id}/posting")]
-// pub async fn delete_posting(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
-//     Ok(HttpResponse::Ok().finish())
-// }
