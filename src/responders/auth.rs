@@ -1,10 +1,10 @@
-use crate::{models::member::Login};
+use crate::auth::{Login, Signup};
 use crate::{DbPool, auth};
 use actix_web::{web, Error, HttpResponse, post};
 use actix_web::error;
 use crate::schema::member;
 use diesel::prelude::*;
-use crate::models::member::{Member, Signup, NewMember};
+use crate::models::member::{Member, NewMember};
 use crate::schema::member::dsl;
 
 // Sends the login payload to the server and returns a JWT.

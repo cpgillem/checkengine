@@ -1,4 +1,4 @@
-use crate::{auth::{self, AuthError, JwtClaims}, DbPool};
+use crate::{auth::{self, AuthError, JwtClaims, Signup}, DbPool};
 use chrono::prelude::*;
 use diesel::prelude::*;
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -85,18 +85,6 @@ impl NewMember{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputMember {
     pub username: String,
-    pub password_raw: String,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct Login {
-    pub username: String,
-    pub password_raw: String,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct Signup {
-    pub username: String, 
     pub password_raw: String,
 }
 

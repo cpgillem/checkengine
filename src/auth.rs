@@ -39,6 +39,18 @@ pub struct JwtClaims {
     pub exp: usize,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct Login {
+    pub username: String,
+    pub password_raw: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Signup {
+    pub username: String, 
+    pub password_raw: String,
+}
+
 impl error::ResponseError for AuthError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).insert_header(ContentType::html()).body("fail")
@@ -134,6 +146,8 @@ fn generate_salt() -> Result<Salt, AuthError> {
 
 #[cfg(test)]
 mod tests {
+    use crate::{auth::{Signup, self}, models::member::NewMember};
+
     use super::{hash_password, check_password, extract_jwt_from_header_str};
 
     #[test]
@@ -152,5 +166,17 @@ mod tests {
         let header_str = String::from("blah");
         let result = extract_jwt_from_header_str(&header_str);
         assert!(result.is_err());
+    }
+    
+    #[test]
+    fn test_from_input() {
+        let input_member = Signup {
+            username: String::from("user"),
+            password_raw: String::from("hunter2"),
+        };
+
+        let new_member = NewMember::from_signup(&input_member).expect("could not convert to NewMember");
+
+        assert!(auth::check_password("hunter2", &new_member.password_hash, &new_member.salt).is_ok());
     }
 }
