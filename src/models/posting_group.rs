@@ -1,11 +1,10 @@
 use crate::schema::*;
 use crate::models::posting::Posting;
 use chrono::prelude::*;
-use diesel::{Insertable, Queryable, AsChangeset, Identifiable};
+use diesel::{Insertable, Queryable, Identifiable};
 use serde::{Deserialize, Serialize};
 
 use crate::models::member::Member;
-use crate::models::posting::InputPosting;
 
 #[derive(Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[table_name="posting_group"]

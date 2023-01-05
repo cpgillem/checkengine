@@ -1,5 +1,3 @@
-use std::iter::Sum;
-
 use chrono::Utc;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};

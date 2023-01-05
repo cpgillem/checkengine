@@ -1,4 +1,4 @@
-use crate::{models::{register::{InputRegister}, member::{InputMember, Member}}, schema::{register, member}};
+use crate::{models::{register::{InputRegister}, member::{InputMember, Member}}, schema::member};
 use crate::DbPool;
 use actix_web::{web, Error, HttpResponse, get, post, delete, patch, error};
 use diesel::{QueryDsl, RunQueryDsl};

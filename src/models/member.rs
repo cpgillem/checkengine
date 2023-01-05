@@ -1,4 +1,4 @@
-use crate::{auth::{self, AuthError, JwtClaims}, DbConnection, DbPool};
+use crate::{auth::{self, AuthError, JwtClaims}, DbPool};
 use chrono::prelude::*;
 use diesel::prelude::*;
 use jsonwebtoken::{encode, EncodingKey, Header};

@@ -12,9 +12,6 @@ use actix_web::{error, HttpResponse};
 use derive_more::{Error, Display};
 use serde::{Deserialize, Serialize};
 
-use crate::DbPool;
-use crate::models::member::Member;
-
 const SALT_LEN: usize = 16;
 const HASH_LEN: usize = digest::SHA512_OUTPUT_LEN;
 const ITERATIONS: u32 = 100_000;
@@ -68,7 +65,7 @@ pub fn check_password(password_raw: &str, password_hash: &str, salt: &str) -> Re
 
     let decoded_salt = base64::decode(salt).map_err(|_| AuthError::BadBase64String)?;
 
-    pbkdf2::verify(PBKDF2_HMAC_SHA512, NonZeroU32::new(ITERATIONS).unwrap(), &decoded_salt, &password_bytes, &decoded_password_hash).map_err(|e| AuthError::PasswordMismatch)
+    pbkdf2::verify(PBKDF2_HMAC_SHA512, NonZeroU32::new(ITERATIONS).unwrap(), &decoded_salt, &password_bytes, &decoded_password_hash).map_err(|_| AuthError::PasswordMismatch)
 }
 
 pub fn get_jwt_secret() -> Vec<u8> {

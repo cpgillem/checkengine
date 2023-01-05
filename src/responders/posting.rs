@@ -1,15 +1,13 @@
 use crate::models::posting::{Posting, NewPosting};
-use crate::models::{member::Member, posting::InputPosting};
+use crate::models::posting::InputPosting;
 use crate::models::posting_group::*;
 use crate::responders::{get_connection, get_member};
-use crate::{schema::*, DbConnection};
+use crate::schema::*;
 
 use crate::DbPool;
-use actix_web::{web, HttpResponse, HttpRequest, Error, get, post, delete, patch, error};
-use diesel::dsl::now;
+use actix_web::{web, HttpResponse, HttpRequest, Error, post, delete, error};
 use diesel::prelude::*;
 use diesel::RunQueryDsl;
-use chrono::prelude::*;
 
 /// Adds a posting to the posting group.
 #[post("posting")]
