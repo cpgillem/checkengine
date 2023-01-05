@@ -9,6 +9,7 @@ pub mod models;
 pub mod schema;
 pub mod builders;
 pub mod auth;
+pub mod controllers;
 // pub mod middleware;
 
 // pub mod resource_responders;

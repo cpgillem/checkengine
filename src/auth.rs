@@ -30,6 +30,7 @@ pub enum AuthError {
     JwtError,
     InvalidJwt,
     BadRequest,
+    Unauthorized,
     Unspecified,
 }
 
