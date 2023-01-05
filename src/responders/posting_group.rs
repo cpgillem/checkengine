@@ -36,17 +36,6 @@ pub async fn create_posting_group(pool: web::Data<DbPool>, request: HttpRequest,
     let member = get_member(&request, &pool)?;
     let mut connection = get_connection(&pool)?;
     let new_posting_group = NewPostingGroup::from_input(&input_posting_group.0, &member);
-    // let new_postings = input_posting_group.postings
-    //     .iter()
-    //     .map(|i| {
-    //         NewPosting::from_input(&i)
-    //     })
-    //     .collect::<Vec<_>>();
-    
-    // Check for balance. This ideally would not happen since the frontend will validate it.
-    // if NewPosting::sum(&new_postings) != 0 {
-    //     return Err(error::ErrorBadRequest("posting group must balance."))
-    // }
 
     // Add the group to the database.
     let inserted_posting_group = diesel::insert_into(posting_group::table)
@@ -59,8 +48,21 @@ pub async fn create_posting_group(pool: web::Data<DbPool>, request: HttpRequest,
 
 /// Deletes a posting group.
 #[delete("{id}")]
-pub async fn delete_posting_group(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::Ok().finish())
+pub async fn delete_posting_group(pool: web::Data<DbPool>, path: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    let id = path.into_inner();
+    let member = get_member(&request, &pool)?;
+    let mut connection = get_connection(&pool)?;
+
+    // Delete the posting group.
+    diesel::delete(
+        posting_group::table
+            .filter(posting_group::member_id.eq(member.id))
+            .find(id)
+    )
+    .execute(&mut connection)
+    .map_err(|e| error::ErrorInternalServerError(e))?;
+
+    Ok(HttpResponse::Ok().body("deleted"))
 }
 
 /// Updates metadata for a posting group.
