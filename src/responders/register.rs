@@ -1,109 +1,70 @@
-use crate::models::member::Member;
-use crate::models::register::{Register, NewRegister};
-use crate::schema::register::dsl;
+use crate::controllers::register_controller::RegisterController;
+use crate::responders::get_member;
 use crate::models::register::InputRegister;
-use crate::DbPool;
 use actix_web::{HttpRequest, error};
 use actix_web::{web, Error, HttpResponse, get, post, delete, patch};
-use diesel::prelude::*;
-use diesel::dsl::now;
 
 #[get("")]
-pub async fn get_registers(pool: web::Data<DbPool>, request: actix_web::HttpRequest) -> Result<HttpResponse, Error> {
-    let mut connection = pool.get().map_err(|e| error::ErrorInternalServerError(e))?;
-
+pub async fn get_registers(controller: web::Data<RegisterController>, request: actix_web::HttpRequest) -> Result<HttpResponse, Error> {
     // Extract the logged in user.
-    let member = Member::from_header(&request, &pool)
-        .map_err(|e| error::ErrorUnauthorized(e))?;
+    let member = get_member(&request, &controller.pool)?;
 
     // Find the user's registers.
-    let registers = Register::belonging_to(&member)
-        .load::<Register>(&mut connection)
+    let registers = controller.get_all(&member)
         .map_err(|e| error::ErrorNotFound(e))?;
     
     Ok(HttpResponse::Ok().json(registers))
 }
 
 #[get("{id}")]
-pub async fn get_register(pool: web::Data<DbPool>, path: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
-    let id = path.into_inner();
+pub async fn get_register(controller: web::Data<RegisterController>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    // Extract the logged in user.
+    let member = get_member(&request, &controller.pool)?;
 
-    // Extract logged in user.
-    let member = Member::from_header(&request, &pool)
-        .map_err(|e| error::ErrorUnauthorized(e))?;
-
-    // Create connection.
-    let mut connection = pool.get()
-        .map_err(|e| error::ErrorInternalServerError(e))?;
-
-    // Find the register, as long as it belongs to the user.
-    let register = dsl::register
-        .filter(dsl::id.eq(id))
-        .filter(dsl::member_id.eq(member.id))
-        .first::<Register>(&mut connection)
+    // Retrieve the register.
+    let register = controller.get(id.into_inner(), &member)
         .map_err(|e| error::ErrorNotFound(e))?;
 
     Ok(HttpResponse::Ok().json(register))
 }
 
 #[post("")]
-pub async fn add_register(pool: web::Data<DbPool>, input: web::Json<InputRegister>, request: actix_web::HttpRequest) -> Result<HttpResponse, Error> {
-    let mut connection = pool.get().map_err(|e| error::ErrorInternalServerError(e))?;
-
-    // Extract the logged in user.
-    let member = Member::from_header(&request, &pool)
-        .map_err(|e| error::ErrorUnauthorized(e))?;
-    
-    // Extract the input.
-    let input_register = input.0;
+pub async fn add_register(controller: web::Data<RegisterController>, input: web::Json<InputRegister>, request: actix_web::HttpRequest) -> Result<HttpResponse, Error> {
+    // Retrieve user.
+    let member = get_member(&request, &controller.pool)?;
 
     // Create a new register.
-    let new_register = NewRegister::from_input(&input_register, &member);
-    let inserted_register = diesel::insert_into(dsl::register)
-        .values(&new_register)
-        .get_result::<Register>(&mut connection)
+    let inserted_register = controller.create(&input, &member)
         .map_err(|e| error::ErrorInternalServerError(e))?;
+
     Ok(HttpResponse::Ok().json(inserted_register))
 }
 
 #[delete("{id}")]
-pub async fn delete_register(pool: web::Data<DbPool>, path: web::Path<i32>, request: actix_web::HttpRequest) ->  Result<HttpResponse, Error> {
-    let id = path.into_inner();
-
+pub async fn delete_register(controller: web::Data<RegisterController>, id: web::Path<i32>, request: actix_web::HttpRequest) ->  Result<HttpResponse, Error> {
     // Extract the logged in user.
-    let member = Member::from_header(&request, &pool)
-        .map_err(|e| error::ErrorUnauthorized(e))?;
-
-    let mut connection = pool.get()
-        .map_err(|e| error::ErrorInternalServerError(e))?;
+    let member = get_member(&request, &controller.pool)?;
 
     // Delete the register.
-    diesel::delete(dsl::register.filter(dsl::member_id.eq(member.id)).find(id))
-        .execute(&mut connection)
+    controller.delete(id.into_inner(), &member)
         .map_err(|e| error::ErrorInternalServerError(e))?;
 
     Ok(HttpResponse::Ok().body("deleted"))
 }
 
 #[patch("{id}")]
-pub async fn update_register(pool: web::Data<DbPool>, path: web::Path<i32>, input: web::Json<InputRegister>,  request: actix_web::HttpRequest) -> Result<HttpResponse, Error> {
-    let id = path.into_inner();
+pub async fn update_register(
+    controller: web::Data<RegisterController>, 
+    id: web::Path<i32>, 
+    input: web::Json<InputRegister>,  
+    request: actix_web::HttpRequest
+) -> Result<HttpResponse, Error> {
 
     // Extract the logged in user.
-    let member = Member::from_header(&request, &pool)
-        .map_err(|e| error::ErrorUnauthorized(e))?;
-
-    let mut connection = pool.get().map_err(|e| error::ErrorInternalServerError(e))?;
-
-    let input_register = input.0;
+    let member = get_member(&request, &controller.pool)?;
     
-    diesel::update(dsl::register.filter(dsl::member_id.eq(member.id)).find(id))
-        .set((
-            dsl::title.eq(input_register.title),
-            dsl::modified_at.eq(now),
-        ))
-        .execute(&mut connection)
+    let updated_register = controller.update(id.into_inner(), &input, &member)
         .map_err(|e| error::ErrorInternalServerError(e))?;
 
-    Ok(HttpResponse::Ok().body("updated"))
+    Ok(HttpResponse::Ok().json(updated_register))
 }
