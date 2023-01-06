@@ -1,5 +1,5 @@
 use crate::{
-    models::{register::{Register, NewRegister, InputRegister}},
+    models::{register::{Register, NewRegister, InputRegister, UpdateRegister}},
     schema::register,
     DbPool, auth::JwtClaims,
 };
@@ -71,22 +71,26 @@ impl RegisterController {
     }
 
     /// Updates a register if allowed.
-    pub fn update(&self, id: i32, input: &InputRegister, jwt: &JwtClaims) -> Result<Register, DataError> {
+    pub fn update(&self, id: i32, input: &UpdateRegister, jwt: &JwtClaims) -> Result<Register, DataError> {
         let mut connection = get_connection(&self.pool)?;
 
         // Retrieve the register, if owned, or in existence.
         self.get(id, jwt)?;
 
-        // TODO: Implement AsChangeset
         // Make the update.
-        diesel::update(
-            register::table.find(id)
-        )
-        .set((
-            register::title.eq(&input.title),
-            register::modified_at.eq(now),
-        ))
-        .get_result::<Register>(&mut connection)
-        .map_err(|_| DataError::NotUpdated)
+        let updated_register = diesel::update(
+                register::table.find(id)
+            )
+            .set(input)
+            .get_result::<Register>(&mut connection)
+            .map_err(|_| DataError::NotUpdated)?;
+
+        // Update metadata.
+        diesel::update(register::table.find(id))
+            .set(register::modified_at.eq(now))
+            .execute(&mut connection)
+            .map_err(|_| DataError::Unspecified)?;
+
+        Ok(updated_register)
     }
 }

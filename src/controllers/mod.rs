@@ -4,6 +4,7 @@ use crate::{auth, DbConnection, DbPool};
 
 pub mod member_controller;
 pub mod register_controller;
+pub mod posting_group_controller;
 
 /// Returned from controllers, in order to separate from using diesel's errors.
 #[derive(Debug, Display)]

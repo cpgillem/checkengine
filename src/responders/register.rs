@@ -1,6 +1,6 @@
 use crate::controllers::register_controller::RegisterController;
 use crate::responders::get_jwt;
-use crate::models::register::InputRegister;
+use crate::models::register::{InputRegister, UpdateRegister};
 use actix_web::{HttpRequest, error};
 use actix_web::{web, Error, HttpResponse, get, post, delete, patch};
 
@@ -56,14 +56,15 @@ pub async fn delete_register(controller: web::Data<RegisterController>, id: web:
 pub async fn update_register(
     controller: web::Data<RegisterController>, 
     id: web::Path<i32>, 
-    input: web::Json<InputRegister>,  
+    input: web::Json<UpdateRegister>,  
     request: actix_web::HttpRequest
 ) -> Result<HttpResponse, Error> {
 
     // Extract the logged in user.
     let jwt = get_jwt(&request)?;
     
-    let updated_register = controller.update(id.into_inner(), &input, &jwt)
+    let updated_register = controller
+        .update(id.into_inner(), &input.into_inner(), &jwt)
         .map_err(|e| error::ErrorInternalServerError(e))?;
 
     Ok(HttpResponse::Ok().json(updated_register))

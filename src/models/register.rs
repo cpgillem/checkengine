@@ -38,9 +38,15 @@ impl NewRegister<'_> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, AsChangeset)]
-#[table_name="register"]
+#[derive(Debug, Deserialize)]
 pub struct InputRegister {
     pub title: String,
+    pub parent_id: Option<i32>,
+}
+
+#[derive(Debug, Deserialize, AsChangeset)]
+#[table_name="register"]
+pub struct UpdateRegister {
+    pub title: Option<String>,
     pub parent_id: Option<i32>,
 }
