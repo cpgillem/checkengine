@@ -1,6 +1,6 @@
 use actix_web::{Error, error, HttpRequest};
 
-use crate::{DbPool, DbConnection, models::member::Member};
+use crate::{DbPool, DbConnection, models::member::Member, auth::{validate_jwt_from_header, JwtClaims}};
 
 // Resource routes for registers (accounts).
 pub mod register;
@@ -23,4 +23,12 @@ pub fn get_connection(pool: &DbPool) -> Result<DbConnection, Error> {
 // Wraps the function for retrieving a member from the header in a result with an actix error.
 pub fn get_member(request: &HttpRequest, pool: &DbPool) -> Result<Member, Error> {
     Ok(Member::from_header(request, pool).map_err(|e| error::ErrorUnauthorized(e))?)
+}
+
+// Gets the claims from a request, or returns an actix error.
+pub fn get_jwt(request: &HttpRequest) -> Result<JwtClaims, Error> {
+    Ok(
+        validate_jwt_from_header(&request)
+            .map_err(|e| error::ErrorUnauthorized(e))?
+    )
 }
