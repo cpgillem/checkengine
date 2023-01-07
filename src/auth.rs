@@ -34,7 +34,7 @@ pub enum AuthError {
     Unspecified,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct JwtClaims {
     pub sub: i32,
     pub exp: usize,

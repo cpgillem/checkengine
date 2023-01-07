@@ -4,7 +4,7 @@ use crate::{
     DbPool, auth::JwtClaims,
 };
 
-use super::{get_connection, DataError};
+use super::{get_connection, DataError, Resource};
 
 use diesel::{RunQueryDsl, dsl::now};
 use diesel::prelude::*;
@@ -13,13 +13,23 @@ use diesel::prelude::*;
 #[derive(Clone)]
 pub struct RegisterController {
     pub pool: DbPool,
+    pub jwt: JwtClaims,
+}
+
+impl Resource for RegisterController {
+    fn new(pool: &DbPool, jwt: &JwtClaims) -> Self {
+        Self {
+            pool: pool.clone(),
+            jwt: jwt.clone(),
+        }
+    }
 }
 
 impl RegisterController {
     /// Creates a new register in the database from input.
-    pub fn create(&self, input: &InputRegister, jwt: &JwtClaims) -> Result<Register, DataError> {
+    pub fn create(&self, input: &InputRegister) -> Result<Register, DataError> {
         let mut connection = get_connection(&self.pool)?;
-        let new_register = NewRegister::from_input(&input, jwt.sub);
+        let new_register = NewRegister::from_input(&input, self.jwt.sub);
         diesel::insert_into(register::table)
             .values(&new_register)
             .get_result::<Register>(&mut connection)
@@ -27,18 +37,18 @@ impl RegisterController {
     }
 
     /// Retrieves all registers.
-    pub fn get_all(&self, jwt: &JwtClaims) -> Result<Vec<Register>, DataError> {
+    pub fn get_all(&self) -> Result<Vec<Register>, DataError> {
         let mut connection = get_connection(&self.pool)?;
         Ok(
             register::table
-                .filter(register::member_id.eq(jwt.sub))
+                .filter(register::member_id.eq(self.jwt.sub))
                 .load::<Register>(&mut connection)
                 .map_err(|_| DataError::Unspecified)?
         )
     }
 
     /// Retrieves one register.
-    pub fn get(&self, id: i32, jwt: &JwtClaims) -> Result<Register, DataError> {
+    pub fn get(&self, id: i32) -> Result<Register, DataError> {
         let mut connection = get_connection(&self.pool)?;
 
         // Get the register.
@@ -48,7 +58,7 @@ impl RegisterController {
             .map_err(|_| DataError::NotFound)?;
         
         // It's a different problem if it isn't owned.
-        if register.member_id != jwt.sub {
+        if register.member_id != self.jwt.sub {
             return Err(DataError::NotOwned);
         }
 
@@ -56,11 +66,11 @@ impl RegisterController {
     }
 
     /// Deletes a register, if allowed. Only actually return a 404 even if it is found but not authorized.
-    pub fn delete(&self, id: i32, jwt: &JwtClaims) -> Result<usize, DataError> {
+    pub fn delete(&self, id: i32) -> Result<usize, DataError> {
         let mut connection = get_connection(&self.pool)?;
 
         // Retrieve register, if owned, or in existence.
-        self.get(id, jwt)?;
+        self.get(id)?;
         
         // Delete the record.
         diesel::delete(
@@ -71,11 +81,11 @@ impl RegisterController {
     }
 
     /// Updates a register if allowed.
-    pub fn update(&self, id: i32, input: &UpdateRegister, jwt: &JwtClaims) -> Result<Register, DataError> {
+    pub fn update(&self, id: i32, input: &UpdateRegister) -> Result<Register, DataError> {
         let mut connection = get_connection(&self.pool)?;
 
         // Retrieve the register, if owned, or in existence.
-        self.get(id, jwt)?;
+        self.get(id)?;
 
         // Make the update.
         let updated_register = diesel::update(
