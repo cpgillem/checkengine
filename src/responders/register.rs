@@ -1,5 +1,6 @@
 use crate::DbPool;
 use crate::controllers::register_controller::RegisterController;
+use crate::controllers::{GetResource, CreateResource, DeleteResource, UpdateResource};
 use crate::responders::get_controller;
 use crate::models::register::{InputRegister, UpdateRegister};
 use actix_web::{HttpRequest, error};

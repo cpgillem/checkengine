@@ -1,5 +1,6 @@
 use crate::DbPool;
 use crate::controllers::posting_group_controller::PostingGroupController;
+use crate::controllers::{GetResource, CreateResource, DeleteResource, UpdateResource};
 use crate::models::posting::Posting;
 use crate::models::posting_group::*;
 use crate::responders::{get_connection, get_controller};
