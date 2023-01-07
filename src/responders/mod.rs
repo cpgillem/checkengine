@@ -1,6 +1,6 @@
 use actix_web::{Error, error, HttpRequest};
 
-use crate::{DbPool, DbConnection, models::member::Member, auth::{validate_jwt_from_header, JwtClaims}, controllers::Resource};
+use crate::{DbPool, DbConnection, models::member::Member, auth::{validate_jwt_from_header, JwtClaims}, controllers::ResourceController};
 
 // Resource routes for registers (accounts).
 pub mod register;
@@ -34,7 +34,7 @@ pub fn get_jwt(request: &HttpRequest) -> Result<JwtClaims, Error> {
 }
 
 /// Generates a generic resource controller.
-pub fn get_controller<T: Resource>(pool: &DbPool, request: &HttpRequest) -> Result<T, Error> {
+pub fn get_controller<T: ResourceController>(pool: &DbPool, request: &HttpRequest) -> Result<T, Error> {
     Ok(
         T::new(pool, &get_jwt(request)?)
     )

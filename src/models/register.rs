@@ -4,6 +4,8 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::models::member::Member;
 
+use super::Resource;
+
 #[derive(Debug, Serialize, Deserialize, Queryable, Associations, Identifiable)]
 #[belongs_to(Member)]
 #[table_name = "register"]
@@ -14,6 +16,12 @@ pub struct Register {
     pub modified_at: chrono::NaiveDateTime,
     pub parent_id: Option<i32>,
     pub member_id: i32,
+}
+
+impl Resource for Register {
+    fn get_member_id(&self) -> i32 {
+        self.member_id
+    }
 }
 
 #[derive(Insertable, Debug)]

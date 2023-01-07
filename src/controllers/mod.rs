@@ -1,7 +1,7 @@
 use derive_more::Display;
 use diesel::AsChangeset;
 
-use crate::{auth::{self, JwtClaims}, DbConnection, DbPool};
+use crate::{auth::{self, JwtClaims}, DbConnection, DbPool, models::Resource};
 
 pub mod member_controller;
 pub mod register_controller;
@@ -29,13 +29,22 @@ pub trait Controller {
 }
 
 /// Defines a resource controller with CRUD operations on a connection pool and with authorization.
-pub trait Resource {
+pub trait ResourceController : Controller {
     fn new(pool: &DbPool, jwt: &JwtClaims) -> Self;
+    fn get_member_id(&self) -> i32;
 }
 
-pub trait GetResource<T> {
+pub trait GetResource<T: Resource> : ResourceController {
     fn get(&self, id: i32) -> Result<T, DataError>;
     fn get_all(&self) -> Result<Vec<T>, DataError>;
+
+    fn check_ownership(&self, r: &T) -> Result<(), DataError> {
+        if r.get_member_id() != self.get_member_id() {
+            return Err(DataError::NotOwned)
+        }
+
+        Ok(())
+    }
 }
 
 pub trait DeleteResource {

@@ -4,7 +4,7 @@ use crate::{
     DbPool, auth::JwtClaims,
 };
 
-use super::{DataError, Resource, GetResource, CreateResource, DeleteResource, UpdateResource, Controller};
+use super::{DataError, ResourceController, GetResource, CreateResource, DeleteResource, UpdateResource, Controller};
 
 use diesel::{RunQueryDsl, dsl::now};
 use diesel::prelude::*;
@@ -22,12 +22,16 @@ impl Controller for RegisterController {
     }
 }
 
-impl Resource for RegisterController {
+impl ResourceController for RegisterController {
     fn new(pool: &DbPool, jwt: &JwtClaims) -> Self {
         Self {
             pool: pool.clone(),
             jwt: jwt.clone(),
         }
+    }
+
+    fn get_member_id(&self) -> i32 {
+        self.jwt.sub
     }
 }
 
@@ -42,7 +46,7 @@ impl GetResource<Register> for RegisterController {
             .map_err(|_| DataError::NotFound)?;
         
         // It's a different problem if it isn't owned.
-        if register.member_id != self.jwt.sub {
+        if register.member_id != self.get_member_id() {
             return Err(DataError::NotOwned);
         }
 
@@ -54,7 +58,7 @@ impl GetResource<Register> for RegisterController {
         let mut connection = self.get_connection()?;
         Ok(
             register::table
-                .filter(register::member_id.eq(self.jwt.sub))
+                .filter(register::member_id.eq(self.get_member_id()))
                 .load::<Register>(&mut connection)
                 .map_err(|_| DataError::Unspecified)?
         )
@@ -65,7 +69,7 @@ impl CreateResource<InputRegister, Register> for RegisterController {
     /// Creates a new register in the database from input.
     fn create(&self, input: &InputRegister) -> Result<Register, DataError> {
         let mut connection = self.get_connection()?;
-        let new_register = NewRegister::from_input(&input, self.jwt.sub);
+        let new_register = NewRegister::from_input(&input, self.get_member_id());
         diesel::insert_into(register::table)
             .values(&new_register)
             .get_result::<Register>(&mut connection)

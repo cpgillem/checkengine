@@ -1,6 +1,6 @@
 use crate::{DbPool, models::{posting_group::{InputPostingGroup, PostingGroup, NewPostingGroup, UpdatePostingGroup}}, auth::JwtClaims, schema::posting_group};
 
-use super::{DataError, Resource, GetResource, CreateResource, DeleteResource, UpdateResource, Controller};
+use super::{DataError, ResourceController, GetResource, CreateResource, DeleteResource, UpdateResource, Controller};
 
 use diesel::{prelude::*, dsl::now};
 
@@ -16,12 +16,16 @@ impl Controller for PostingGroupController {
     }
 }
 
-impl Resource for PostingGroupController {
+impl ResourceController for PostingGroupController {
     fn new(pool: &DbPool, jwt: &JwtClaims) -> Self {
         Self {
             pool: pool.clone(),
             jwt: jwt.clone(),
         }
+    }
+
+    fn get_member_id(&self) -> i32 {
+        self.jwt.sub
     }
 }
 
@@ -34,16 +38,14 @@ impl GetResource<PostingGroup> for PostingGroupController {
             .map_err(|_| DataError::NotFound)?;
 
         // Return a different error if it is not owned.
-        if posting_group.member_id != self.jwt.sub {
-            return Err(DataError::NotOwned);
-        }
+        self.check_ownership(&posting_group)?;
 
         Ok(posting_group)
     }
 
     fn get_all(&self) -> Result<Vec<PostingGroup>, DataError> {
         posting_group::table
-            .filter(posting_group::member_id.eq(self.jwt.sub))
+            .filter(posting_group::member_id.eq(self.get_member_id()))
             .load::<PostingGroup>(&mut self.get_connection()?)
             .map_err(|_| DataError::Unspecified)
     }
@@ -52,7 +54,7 @@ impl GetResource<PostingGroup> for PostingGroupController {
 impl CreateResource<InputPostingGroup, PostingGroup> for PostingGroupController {
     fn create(&self, input: &InputPostingGroup) -> Result<PostingGroup, DataError> {
         diesel::insert_into(posting_group::table)
-            .values(&NewPostingGroup::from_input(&input, self.jwt.sub))
+            .values(&NewPostingGroup::from_input(&input, self.get_member_id()))
             .get_result::<PostingGroup>(&mut self.get_connection()?)
             .map_err(|_| DataError::NotInserted)
     }

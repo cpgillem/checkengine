@@ -17,3 +17,8 @@ pub trait WithMetadata {
     // fn set_modified_at(&mut self, v: chrono::NaiveDateTime);
     // fn set_created_at(&mut self, v: chrono::NaiveDateTime);
 }
+
+/// Defines an owned resource.
+pub trait Resource {
+    fn get_member_id(&self) -> i32;
+}
