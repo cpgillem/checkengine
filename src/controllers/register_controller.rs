@@ -4,7 +4,7 @@ use crate::{
     DbPool, auth::JwtClaims,
 };
 
-use super::{get_connection, DataError, Resource, GetResource, CreateResource, DeleteResource, UpdateResource};
+use super::{DataError, Resource, GetResource, CreateResource, DeleteResource, UpdateResource, Controller};
 
 use diesel::{RunQueryDsl, dsl::now};
 use diesel::prelude::*;
@@ -14,6 +14,12 @@ use diesel::prelude::*;
 pub struct RegisterController {
     pub pool: DbPool,
     pub jwt: JwtClaims,
+}
+
+impl Controller for RegisterController {
+    fn get_pool(&self) -> &DbPool {
+        &self.pool
+    }
 }
 
 impl Resource for RegisterController {
@@ -27,7 +33,7 @@ impl Resource for RegisterController {
 
 impl GetResource<Register> for RegisterController {
     fn get(&self, id: i32) -> Result<Register, DataError> {
-        let mut connection = get_connection(&self.pool)?;
+        let mut connection = self.get_connection()?;
 
         // Get the register.
         let register = register::table
@@ -45,7 +51,7 @@ impl GetResource<Register> for RegisterController {
 
     /// Retrieves all registers.
     fn get_all(&self) -> Result<Vec<Register>, DataError> {
-        let mut connection = get_connection(&self.pool)?;
+        let mut connection = self.get_connection()?;
         Ok(
             register::table
                 .filter(register::member_id.eq(self.jwt.sub))
@@ -58,7 +64,7 @@ impl GetResource<Register> for RegisterController {
 impl CreateResource<InputRegister, Register> for RegisterController {
     /// Creates a new register in the database from input.
     fn create(&self, input: &InputRegister) -> Result<Register, DataError> {
-        let mut connection = get_connection(&self.pool)?;
+        let mut connection = self.get_connection()?;
         let new_register = NewRegister::from_input(&input, self.jwt.sub);
         diesel::insert_into(register::table)
             .values(&new_register)
@@ -70,7 +76,7 @@ impl CreateResource<InputRegister, Register> for RegisterController {
 impl DeleteResource for RegisterController {
     /// Deletes a register, if allowed. Only actually return a 404 even if it is found but not authorized.
     fn delete(&self, id: i32) -> Result<usize, DataError> {
-        let mut connection = get_connection(&self.pool)?;
+        let mut connection = self.get_connection()?;
 
         // Retrieve register, if owned, or in existence.
         self.get(id)?;
@@ -87,7 +93,7 @@ impl DeleteResource for RegisterController {
 impl UpdateResource<UpdateRegister, Register> for RegisterController {
     /// Updates a register if allowed.
     fn update(&self, id: i32, input: &UpdateRegister) -> Result<Register, DataError> {
-        let mut connection = get_connection(&self.pool)?;
+        let mut connection = self.get_connection()?;
 
         // Retrieve the register, if owned, or in existence.
         self.get(id)?;

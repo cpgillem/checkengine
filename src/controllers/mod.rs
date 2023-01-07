@@ -20,9 +20,12 @@ pub enum DataError {
     Unspecified,
 }
 
-/// Wraps the function for creating a DB connection in a result with a data error.
-pub fn get_connection(pool: &DbPool) -> Result<DbConnection, DataError> {
-    Ok(pool.get().map_err(|_| DataError::Unspecified)?)
+pub trait Controller {
+    fn get_pool(&self) -> &DbPool;
+
+    fn get_connection(&self) -> Result<DbConnection, DataError> {
+        Ok(self.get_pool().get().map_err(|_| DataError::Unspecified)?)
+    }
 }
 
 /// Defines a resource controller with CRUD operations on a connection pool and with authorization.

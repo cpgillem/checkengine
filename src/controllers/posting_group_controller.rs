@@ -1,6 +1,6 @@
 use crate::{DbPool, models::{posting_group::{InputPostingGroup, PostingGroup, NewPostingGroup, UpdatePostingGroup}}, auth::JwtClaims, schema::posting_group};
 
-use super::{get_connection, DataError, Resource, GetResource, CreateResource, DeleteResource, UpdateResource};
+use super::{DataError, Resource, GetResource, CreateResource, DeleteResource, UpdateResource, Controller};
 
 use diesel::{prelude::*, dsl::now};
 
@@ -8,6 +8,12 @@ use diesel::{prelude::*, dsl::now};
 pub struct PostingGroupController {
     pub pool: DbPool,
     pub jwt: JwtClaims,
+}
+
+impl Controller for PostingGroupController {
+    fn get_pool(&self) -> &DbPool {
+        &self.pool
+    }
 }
 
 impl Resource for PostingGroupController {
@@ -24,7 +30,7 @@ impl GetResource<PostingGroup> for PostingGroupController {
         // Get the posting group.
         let posting_group = posting_group::table
             .filter(posting_group::id.eq(id))
-            .first::<PostingGroup>(&mut get_connection(&self.pool)?)
+            .first::<PostingGroup>(&mut self.get_connection()?)
             .map_err(|_| DataError::NotFound)?;
 
         // Return a different error if it is not owned.
@@ -38,7 +44,7 @@ impl GetResource<PostingGroup> for PostingGroupController {
     fn get_all(&self) -> Result<Vec<PostingGroup>, DataError> {
         posting_group::table
             .filter(posting_group::member_id.eq(self.jwt.sub))
-            .load::<PostingGroup>(&mut get_connection(&self.pool)?)
+            .load::<PostingGroup>(&mut self.get_connection()?)
             .map_err(|_| DataError::Unspecified)
     }
 }
@@ -47,7 +53,7 @@ impl CreateResource<InputPostingGroup, PostingGroup> for PostingGroupController 
     fn create(&self, input: &InputPostingGroup) -> Result<PostingGroup, DataError> {
         diesel::insert_into(posting_group::table)
             .values(&NewPostingGroup::from_input(&input, self.jwt.sub))
-            .get_result::<PostingGroup>(&mut get_connection(&self.pool)?)
+            .get_result::<PostingGroup>(&mut self.get_connection()?)
             .map_err(|_| DataError::NotInserted)
     }
 }
@@ -61,14 +67,14 @@ impl DeleteResource for PostingGroupController {
         diesel::delete(
                 posting_group::table.find(id)
             )
-            .execute(&mut get_connection(&self.pool)?)
+            .execute(&mut self.get_connection()?)
             .map_err(|_| DataError::NotDeleted)
     }
 }
 
 impl UpdateResource<UpdatePostingGroup, PostingGroup> for PostingGroupController {
     fn update(&self, id: i32, input: &UpdatePostingGroup) -> Result<PostingGroup, DataError> {
-        let mut connection = get_connection(&self.pool)?;
+        let mut connection = self.get_connection()?;
 
         self.get(id)?;
 
