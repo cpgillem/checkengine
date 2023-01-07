@@ -1,45 +1,32 @@
-use crate::models::posting::{Posting};
+use crate::controllers::posting_group_controller::PostingGroupController;
+use crate::models::posting::Posting;
 use crate::models::posting_group::*;
-use crate::responders::{get_connection, get_member};
-use crate::schema::*;
-
-use crate::DbPool;
+use crate::responders::{get_connection, get_jwt};
 use actix_web::{web, HttpResponse, HttpRequest, Error, get, post, delete, patch, error};
-use diesel::dsl::now;
 use diesel::prelude::*;
 use diesel::RunQueryDsl;
 
 /// Gets a posting group by ID, along with its postings.
 #[get("{id}")]
-pub async fn get_posting_group(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
-    let id = id.into_inner();
-    let member = get_member(&request, &pool)?;
-    let mut connection = get_connection(&pool)?;
+pub async fn get_posting_group(controller: web::Data<PostingGroupController>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    let jwt = get_jwt(&request)?;
+    let mut connection = get_connection(&controller.pool)?;
 
-    let posting_group = posting_group::table
-        .filter(posting_group::member_id.eq(member.id))
-        .filter(posting_group::id.eq(id))
-        .first::<PostingGroup>(&mut connection)
+    let posting_group = controller.get(id.into_inner(), &jwt)
         .map_err(|e| error::ErrorNotFound(e))?;
 
     let postings = Posting::belonging_to(&posting_group)
         .load::<Posting>(&mut connection)
         .map_err(|e| error::ErrorNotFound(e))?;
 
-    Ok(HttpResponse::Ok().json(FullPostingGroup::new(&posting_group, &postings)))
+    Ok(HttpResponse::Ok().json((&posting_group, &postings)))
 }
 
 /// Creates a posting group given the group metadata and all postings. They must balance.
 #[post("")]
-pub async fn create_posting_group(pool: web::Data<DbPool>, request: HttpRequest, input_posting_group: web::Json<InputPostingGroup>) -> Result<HttpResponse, Error> {
-    let member = get_member(&request, &pool)?;
-    let mut connection = get_connection(&pool)?;
-    let new_posting_group = NewPostingGroup::from_input(&input_posting_group.0, &member);
-
-    // Add the group to the database.
-    let inserted_posting_group = diesel::insert_into(posting_group::table)
-        .values(&new_posting_group)
-        .get_result::<PostingGroup>(&mut connection)
+pub async fn create_posting_group(controller: web::Data<PostingGroupController>, request: HttpRequest, input_posting_group: web::Json<InputPostingGroup>) -> Result<HttpResponse, Error> {
+    let jwt = get_jwt(&request)?;
+    let inserted_posting_group = controller.create(&input_posting_group, &jwt)
         .map_err(|e| error::ErrorInternalServerError(e))?;
     
     Ok(HttpResponse::Ok().json(inserted_posting_group))
@@ -47,44 +34,23 @@ pub async fn create_posting_group(pool: web::Data<DbPool>, request: HttpRequest,
 
 /// Deletes a posting group.
 #[delete("{id}")]
-pub async fn delete_posting_group(pool: web::Data<DbPool>, path: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
-    let id = path.into_inner();
-    let member = get_member(&request, &pool)?;
-    let mut connection = get_connection(&pool)?;
-
+pub async fn delete_posting_group(controller: web::Data<PostingGroupController>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    let jwt = get_jwt(&request)?;
+    
     // Delete the posting group.
-    diesel::delete(
-        posting_group::table
-            .filter(posting_group::member_id.eq(member.id))
-            .find(id)
-    )
-    .execute(&mut connection)
-    .map_err(|e| error::ErrorInternalServerError(e))?;
+    controller.delete(id.into_inner(), &jwt)
+        .map_err(|e| error::ErrorInternalServerError(e))?;
 
     Ok(HttpResponse::Ok().body("deleted"))
 }
 
 /// Updates metadata for a posting group.
 #[patch("{id}")]
-pub async fn update_posting_group(pool: web::Data<DbPool>, path: web::Path<i32>, request: HttpRequest, input_posting_group: web::Json<InputPostingGroup>) -> Result<HttpResponse, Error> {
-    let id = path.into_inner();
-    let member = get_member(&request, &pool)?;
-    let mut connection = get_connection(&pool)?;
-
+pub async fn update_posting_group(controller: web::Data<PostingGroupController>, path: web::Path<i32>, request: HttpRequest, input_posting_group: web::Json<UpdatePostingGroup>) -> Result<HttpResponse, Error> {
+    let jwt = get_jwt(&request)?;
     // Update the posting group.
-    diesel::update(
-        posting_group::table
-            .filter(posting_group::member_id.eq(member.id))
-            .find(id)
-    )
-    .set((
-        posting_group::posted_at.eq(input_posting_group.posted_at),
-        posting_group::check_number.eq(input_posting_group.check_number.clone()),
-        posting_group::summary.eq(input_posting_group.summary.clone()),
-        posting_group::modified_at.eq(now),
-    ))
-    .execute(&mut connection)
-    .map_err(|e| error::ErrorInternalServerError(e))?;
+    let updated_posting_group = controller.update(path.into_inner(), &input_posting_group, &jwt)
+        .map_err(|e| error::ErrorInternalServerError(e))?;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().json(updated_posting_group))
 }
