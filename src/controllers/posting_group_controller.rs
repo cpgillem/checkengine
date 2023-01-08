@@ -1,6 +1,6 @@
-use crate::{DbPool, models::{posting_group::{InputPostingGroup, PostingGroup, NewPostingGroup, UpdatePostingGroup}}, auth::JwtClaims, schema::posting_group};
+use crate::{DbPool, models::{posting_group::{InputPostingGroup, PostingGroup, NewPostingGroup, UpdatePostingGroup}, posting::Posting}, auth::JwtClaims, schema::posting_group};
 
-use super::{DataError, ResourceController, GetResource, CreateResource, DeleteResource, UpdateResource, Controller};
+use super::{DataError, ResourceController, GetResource, CreateResource, DeleteResource, UpdateResource, Controller, GetChildren, GetAllResource};
 
 use diesel::{prelude::*, dsl::now};
 
@@ -38,11 +38,15 @@ impl GetResource<PostingGroup> for PostingGroupController {
             .map_err(|_| DataError::NotFound)?;
 
         // Return a different error if it is not owned.
-        self.check_ownership(&posting_group)?;
+        if posting_group.member_id != self.jwt.sub {
+            return Err(DataError::NotOwned);
+        }
 
         Ok(posting_group)
     }
+}
 
+impl GetAllResource<PostingGroup> for PostingGroupController {
     fn get_all(&self) -> Result<Vec<PostingGroup>, DataError> {
         posting_group::table
             .filter(posting_group::member_id.eq(self.get_member_id()))
@@ -95,5 +99,13 @@ impl UpdateResource<UpdatePostingGroup, PostingGroup> for PostingGroupController
             .map_err(|_| DataError::Unspecified)?;
 
         Ok(updated_posting_group)
+    }
+}
+
+impl GetChildren<PostingGroup, Posting> for PostingGroupController {
+    fn get_children(&self, parent: &PostingGroup) -> Result<Vec<Posting>, DataError> {
+        Posting::belonging_to(parent)
+            .load::<Posting>(&mut self.get_connection()?)
+            .map_err(|_| DataError::NotFound)
     }
 }

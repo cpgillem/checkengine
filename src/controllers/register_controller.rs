@@ -4,7 +4,7 @@ use crate::{
     DbPool, auth::JwtClaims,
 };
 
-use super::{DataError, ResourceController, GetResource, CreateResource, DeleteResource, UpdateResource, Controller};
+use super::{DataError, ResourceController, GetResource, CreateResource, DeleteResource, UpdateResource, Controller, GetAllResource};
 
 use diesel::{RunQueryDsl, dsl::now};
 use diesel::prelude::*;
@@ -52,7 +52,9 @@ impl GetResource<Register> for RegisterController {
 
         Ok(register)
     }
+}
 
+impl GetAllResource<Register> for RegisterController {
     /// Retrieves all registers.
     fn get_all(&self) -> Result<Vec<Register>, DataError> {
         let mut connection = self.get_connection()?;

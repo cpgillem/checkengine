@@ -3,8 +3,6 @@ use chrono::prelude::*;
 use diesel::{Insertable, Queryable, Identifiable, AsChangeset};
 use serde::{Deserialize, Serialize};
 
-use super::Resource;
-
 #[derive(Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[table_name="posting_group"]
 pub struct PostingGroup {
@@ -15,12 +13,6 @@ pub struct PostingGroup {
     pub created_at: NaiveDateTime,
     pub modified_at: NaiveDateTime,
     pub member_id: i32,
-}
-
-impl Resource for PostingGroup {
-    fn get_member_id(&self) -> i32 {
-        self.member_id
-    }
 }
 
 #[derive(Insertable, Debug)]

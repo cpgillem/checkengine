@@ -1,7 +1,7 @@
 use derive_more::Display;
 use diesel::AsChangeset;
 
-use crate::{auth::{self, JwtClaims}, DbConnection, DbPool, models::Resource};
+use crate::{auth::{self, JwtClaims}, DbConnection, DbPool};
 
 pub mod member_controller;
 pub mod register_controller;
@@ -34,17 +34,20 @@ pub trait ResourceController : Controller {
     fn get_member_id(&self) -> i32;
 }
 
-pub trait GetResource<T: Resource> : ResourceController {
+pub trait GetResource<T> : ResourceController {
     fn get(&self, id: i32) -> Result<T, DataError>;
+}
+
+pub trait GetAllResource<T> : ResourceController {
     fn get_all(&self) -> Result<Vec<T>, DataError>;
+}
 
-    fn check_ownership(&self, r: &T) -> Result<(), DataError> {
-        if r.get_member_id() != self.get_member_id() {
-            return Err(DataError::NotOwned)
-        }
+pub trait GetChildren<Parent, Child> : ResourceController {
+    fn get_children(&self, parent: &Parent) -> Result<Vec<Child>, DataError>;
+}
 
-        Ok(())
-    }
+pub trait GetParent<Parent, Child> : ResourceController {
+    fn get_parent(&self, child: &Child) -> Result<Parent, DataError>;
 }
 
 pub trait DeleteResource {

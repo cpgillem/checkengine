@@ -79,3 +79,14 @@ pub struct InputPosting {
     pub amount: i64,
     pub posting_group_id: i32,
 }
+
+#[derive(Debug, Deserialize, AsChangeset)]
+#[table_name="posting"]
+pub struct UpdatePosting {
+    pub posted_at: Option<chrono::NaiveDateTime>,
+    pub check_number: Option<String>,
+    pub summary: Option<String>,
+    pub from_register_id: Option<i32>,
+    pub to_register_id: Option<i32>,
+    pub amount: Option<i64>,
+}
