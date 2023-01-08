@@ -22,6 +22,21 @@ async fn main() -> std::io::Result<()> {
                             .service(responders::register::update_register)
                     )
                     .service(
+                        web::scope("/posting_group")
+                            .service(responders::posting_group::create_posting_group)
+                            .service(responders::posting_group::get_posting_group)
+                            .service(responders::posting_group::delete_posting_group)
+                            .service(responders::posting_group::update_posting_group)
+                            .service(responders::posting_group::get_posting_groups)
+                    )
+                    .service(
+                        web::scope("/posting")
+                            .service(responders::posting::get_posting)
+                            .service(responders::posting::add_posting)
+                            .service(responders::posting::update_posting)
+                            .service(responders::posting::delete_posting)
+                    )
+                    .service(
                         web::scope("/auth")
                             .service(responders::auth::authenticate)
                             .service(responders::auth::signup)

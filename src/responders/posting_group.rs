@@ -1,27 +1,33 @@
 use crate::DbPool;
 use crate::controllers::posting_group_controller::PostingGroupController;
-use crate::controllers::{GetResource, CreateResource, DeleteResource, UpdateResource};
-use crate::models::posting::Posting;
+use crate::controllers::{GetResource, CreateResource, DeleteResource, UpdateResource, GetChildren, GetAllResource};
 use crate::models::posting_group::*;
-use crate::responders::{get_connection, get_controller};
+use crate::responders::get_controller;
 use actix_web::{web, HttpResponse, HttpRequest, Error, get, post, delete, patch, error};
-use diesel::prelude::*;
-use diesel::RunQueryDsl;
 
 /// Gets a posting group by ID, along with its postings.
 #[get("{id}")]
 pub async fn get_posting_group(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
     let controller = get_controller::<PostingGroupController>(&pool, &request)?;
-    let mut connection = get_connection(&pool)?;
 
     let posting_group = controller.get(id.into_inner())
         .map_err(|e| error::ErrorNotFound(e))?;
 
-    let postings = Posting::belonging_to(&posting_group)
-        .load::<Posting>(&mut connection)
+    let postings = controller.get_children(&posting_group)
         .map_err(|e| error::ErrorNotFound(e))?;
 
     Ok(HttpResponse::Ok().json((&posting_group, &postings)))
+}
+
+// Gets all posting groups from a user. Probably the most important responder.
+#[get("")]
+pub async fn get_posting_groups(pool: web::Data<DbPool>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    let controller = get_controller::<PostingGroupController>(&pool, &request)?;
+
+    let posting_groups = controller.get_all()
+        .map_err(|e| error::ErrorInternalServerError(e))?;
+    
+    Ok(HttpResponse::Ok().json(posting_groups))
 }
 
 /// Creates a posting group given the group metadata and all postings. They must balance.
