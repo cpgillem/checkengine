@@ -1,5 +1,5 @@
 use actix_web::{HttpServer, App, web};
-use checkengine::{*};
+use checkengine::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -11,6 +11,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(db_pool_data.clone())
+            .service(responders::frontend::index)
             .service(
                 web::scope("/api/v1")
                     .service(
