@@ -1,72 +1,43 @@
-use crate::models::posting::{Posting, NewPosting};
+use crate::controllers::{CreateResource, DeleteResource, UpdateResource, GetResource};
+use crate::controllers::posting_controller::PostingController;
+use crate::models::posting::UpdatePosting;
 use crate::models::posting::InputPosting;
-use crate::models::posting_group::*;
-use crate::responders::{get_connection, get_member};
-use crate::schema::*;
+use crate::responders::get_controller;
 
 use crate::DbPool;
-use actix_web::{web, HttpResponse, HttpRequest, Error, post, delete, error};
-use diesel::prelude::*;
-use diesel::RunQueryDsl;
+use actix_web::{web, HttpResponse, HttpRequest, Error, post, delete, error, patch, get};
 
 /// Adds a posting to the posting group.
-#[post("posting")]
+#[post("")]
 pub async fn add_posting(pool: web::Data<DbPool>, request: HttpRequest, input_posting: web::Json<InputPosting>) -> Result<HttpResponse, Error> {
-    let member = get_member(&request, &pool)?;
-    let mut connection = get_connection(&pool)?;
-
-    // Retrieve the group to validate its ownership.
-    let posting_group = posting_group::table
-        .filter(posting_group::member_id.eq(member.id))
-        .filter(posting_group::id.eq(input_posting.0.posting_group_id))
-        .first::<PostingGroup>(&mut connection)
-        .map_err(|e| error::ErrorNotFound(e))?;
-
-    // Validate ownership.
-    if posting_group.member_id != member.id {
-        return Err(error::ErrorUnauthorized("not owned"));
-    }
-
-    // Insert the new posting.
-    let new_posting = NewPosting::from_input(&input_posting.0);
-    let inserted_posting = diesel::insert_into(posting::table)
-        .values(&new_posting)
-        .get_result::<Posting>(&mut connection)
+    let controller = get_controller::<PostingController>(&pool, &request)?;
+    let new_posting = controller.create(&input_posting)
         .map_err(|e| error::ErrorInternalServerError(e))?;
-
-    Ok(HttpResponse::Ok().json(inserted_posting))
+    Ok(HttpResponse::Ok().json(new_posting))
 }
 
 /// Deletes a posting from a posting group. 
-#[delete("posting/{id}")]
+#[delete("{id}")]
 pub async fn delete_posting(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
-    let member = get_member(&request, &pool)?;
-    let mut connection = get_connection(&pool)?;
+    let controller = get_controller::<PostingController>(&pool, &request)?;
+    controller.delete(id.into_inner()).map_err(|e| error::ErrorNotFound(e))?;
+    Ok(HttpResponse::Ok().finish())
+}
 
-    // Retrieve the posting.
-    let posting = posting::table
-        .filter(posting::id.eq(id.into_inner()))
-        .first::<Posting>(&mut connection)
+/// Updates a posting.
+#[patch("{id}")]
+pub async fn update_posting(pool: web::Data<DbPool>, id: web::Path<i32>, update_posting: web::Json<UpdatePosting>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    let controller = get_controller::<PostingController>(&pool, &request)?;
+    let updated_posting = controller.update(id.into_inner(), &update_posting)
         .map_err(|e| error::ErrorNotFound(e))?;
+    Ok(HttpResponse::Ok().json(updated_posting))
+}
 
-    // Retrieve the parent group for validation.
-    let posting_group = posting_group::table
-        .filter(posting_group::id.eq(posting.posting_group_id))
-        .first::<PostingGroup>(&mut connection)
+// Gets one posting.
+#[get("{id}")]
+pub async fn get_posting(pool: web::Data<DbPool>, id: web::Path<i32>, request: HttpRequest) -> Result<HttpResponse, Error> {
+    let controller = get_controller::<PostingController>(&pool, &request)?;
+    let posting = controller.get(id.into_inner())
         .map_err(|e| error::ErrorNotFound(e))?;
-
-    // Validate ownership.    
-    if posting_group.member_id != member.id {
-        return Err(error::ErrorUnauthorized("not owned"));
-    }
-
-    // Delete the posting.
-    diesel::delete(
-            posting::table
-                .filter(posting::id.eq(posting.id))
-        )
-        .execute(&mut connection)
-        .map_err(|e| error::ErrorInternalServerError(e))?;
-    
-    Ok(HttpResponse::Ok().body("deleted"))
+    Ok(HttpResponse::Ok().json(posting))
 }
