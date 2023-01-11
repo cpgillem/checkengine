@@ -15,8 +15,6 @@ pub mod auth;
 pub mod posting_group;
 pub mod posting;
 
-pub mod frontend;
-
 // Wraps the function for creating a DB connection in a result with an actix error.
 pub fn get_connection(pool: &DbPool) -> Result<DbConnection, Error> {
     Ok(pool.get().map_err(|e| error::ErrorInternalServerError(e))?)

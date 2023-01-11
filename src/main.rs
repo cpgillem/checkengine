@@ -1,3 +1,5 @@
+use std::env;
+
 use actix_web::{HttpServer, App, web};
 use checkengine::*;
 
@@ -11,7 +13,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(db_pool_data.clone())
-            .service(responders::frontend::index)
+            .service(actix_files::Files::new("/", env::var("PUBLIC_DIR").expect("PUBLIC_DIR not set")).index_file("index.html"))
             .service(
                 web::scope("/api/v1")
                     .service(
