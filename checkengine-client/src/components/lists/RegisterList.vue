@@ -1,0 +1,9 @@
+<template>
+    <table>
+        <tr>
+            <th>Register</th>
+            <th>Operations</th>
+        </tr>
+        [registers]
+    </table>
+</template>
