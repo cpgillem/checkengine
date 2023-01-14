@@ -1,10 +1,11 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
   <h1>CheckEngine</h1>
-  [one of: login form, register form, main app]
+  <div>
+    <router-view></router-view>
+  </div>
 </template>
 
 <style scoped>
